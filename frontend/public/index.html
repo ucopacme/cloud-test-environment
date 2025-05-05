@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Test Environment</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background-color: #3b82f6;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 5px;
+    }
+    section {
+      background-color: #fff;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .status-item {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .healthy { background-color: #10b981; }
+    .unhealthy { background-color: #ef4444; }
+    .unknown { background-color: #d1d5db; }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      width: 300px;
+      margin-right: 10px;
+    }
+    .record-item {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+    .timestamp {
+      color: #6b7280;
+      font-size: 0.8rem;
+    }
+    .error {
+      background-color: #fee2e2;
+      border: 1px solid #ef4444;
+      color: #b91c1c;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      display: none;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #3b82f6;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cloud Test Environment</h1>
+    <p>Simple NodeJS frontend for testing backend APIs</p>
+  </header>
+  
+  <main>
+    <section>
+      <h2>Health Status</h2>
+      <div class="status-grid" id="health-status">
+        <div class="status-item">
+          <h3>Frontend</h3>
+          <p>
+            <span class="status-indicator healthy"></span>
+            <span>Healthy</span>
+          </p>
+          <p class="timestamp">Last Updated: <span id="frontend-timestamp"></span></p>
+        </div>
+        <div class="status-item">
+          <h3>Backend API</h3>
+          <p>
+            <span class="status-indicator unknown" id="backend-indicator"></span>
+            <span id="backend-status">Unknown</span>
+          </p>
+          <p class="timestamp">Last Updated: <span id="backend-timestamp">-</span></p>
+        </div>
+        <div class="status-item">
+          <h3>Database</h3>
+          <p>
+            <span class="status-indicator unknown" id="database-indicator"></span>
+            <span id="database-status">Unknown</span>
+          </p>
+          <p class="timestamp">Last Updated: <span id="database-timestamp">-</span></p>
+        </div>
+      </div>
+      <div style="margin-top: 20px">
+        <button id="refresh-health">Refresh Status</button>
+      </div>
+    </section>
+    
+    <section>
+      <h2>Add New Message</h2>
+      <div class="error" id="message-error"></div>
+      <div>
+        <input type="text" id="message-input" placeholder="Enter a message">
+        <button id="submit-message">Submit</button>
+        <span id="submit-loading" class="loading" style="display: none;"></span>
+      </div>
+    </section>
+    
+    <section>
+      <h2>Recent Messages</h2>
+      <div class="error" id="records-error"></div>
+      <div id="records-container">
+        <div id="records-loading" class="loading"></div>
+        <div id="records-list"></div>
+      </div>
+      <div style="margin-top: 20px">
+        <button id="refresh-records">Refresh Records</button>
+      </div>
+    </section>
+  </main>
+  
+  <script>
+    // DOM Elements
+    const backendIndicator = document.getElementById('backend-indicator');
+    const backendStatus = document.getElementById('backend-status');
+    const backendTimestamp = document.getElementById('backend-timestamp');
+    const databaseIndicator = document.getElementById('database-indicator');
+    const databaseStatus = document.getElementById('database-status');
+    const databaseTimestamp = document.getElementById('database-timestamp');
+    const frontendTimestamp = document.getElementById('frontend-timestamp');
+    const recordsList = document.getElementById('records-list');
+    const recordsLoading = document.getElementById('records-loading');
+    const recordsError = document.getElementById('records-error');
+    const messageInput = document.getElementById('message-input');
+    const submitMessage = document.getElementById('submit-message');
+    const submitLoading = document.getElementById('submit-loading');
+    const messageError = document.getElementById('message-error');
+    const refreshHealth = document.getElementById('refresh-health');
+    const refreshRecords = document.getElementById('refresh-records');
+    
+    // Update frontend timestamp
+    frontendTimestamp.textContent = new Date().toLocaleString();
+    
+    // Fetch health status
+    async function fetchHealthStatus() {
+      try {
+        const response = await fetch('/api/health');
+        const data = await response.json();
+        
+        // Update backend status
+        if (data.backend) {
+          backendStatus.textContent = data.backend.status === 'healthy' ? 'Healthy' : 'Unhealthy';
+          backendIndicator.className = `status-indicator ${data.backend.status === 'healthy' ? 'healthy' : 'unhealthy'}`;
+          backendTimestamp.textContent = new Date(data.backend.timestamp).toLocaleString();
+        }
+        
+        // Update database status
+        if (data.database) {
+          databaseStatus.textContent = data.database.status === 'healthy' ? 'Healthy' : 'Unhealthy';
+          databaseIndicator.className = `status-indicator ${data.database.status === 'healthy' ? 'healthy' : 'unhealthy'}`;
+          databaseTimestamp.textContent = new Date(data.database.timestamp).toLocaleString();
+        }
+        
+      } catch (error) {
+        backendStatus.textContent = 'Connection Error';
+        backendIndicator.className = 'status-indicator unhealthy';
+        databaseStatus.textContent = 'Connection Error';
+        databaseIndicator.className = 'status-indicator unhealthy';
+      }
+    }
+    
+    // Fetch records
+    async function fetchRecords() {
+      recordsLoading.style.display = 'inline-block';
+      recordsError.style.display = 'none';
+      
+      try {
+        const response = await fetch('/api/records');
+        const records = await response.json();
+        
+        recordsList.innerHTML = '';
+        
+        if (records && records.length > 0) {
+          records.forEach(record => {
+            const recordEl = document.createElement('div');
+            recordEl.className = 'record-item';
+            recordEl.innerHTML = `
+              <p>${record.message}</p>
+              <p class="timestamp">Created: ${new Date(record.created_at).toLocaleString()}</p>
+            `;
+            recordsList.appendChild(recordEl);
+          });
+        } else {
+          recordsList.innerHTML = '<p>No records found</p>';
+        }
+      } catch (error) {
+        recordsError.textContent = 'Failed to load records. Please try again.';
+        recordsError.style.display = 'block';
+      } finally {
+        recordsLoading.style.display = 'none';
+      }
+    }
+    
+    // Create new record
+    async function createRecord(message) {
+      submitLoading.style.display = 'inline-block';
+      messageError.style.display = 'none';
+      
+      try {
+        const response = await fetch('/api/records', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message }),
+        });
+        const data = await response.json();
+        
+        if (response.status === 201 || response.status === 200) {
+          // Success - clear input and refresh records
+          messageInput.value = '';
+          fetchRecords();
+        } else {
+          messageError.textContent = data.error || 'Failed to create record';
+          messageError.style.display = 'block';
+        }
+      } catch (error) {
+        messageError.textContent = 'Connection error. Please try again.';
+        messageError.style.display = 'block';
+      } finally {
+        submitLoading.style.display = 'none';
+      }
+    }
+    
+    // Event listeners
+    refreshHealth.addEventListener('click', fetchHealthStatus);
+    refreshRecords.addEventListener('click', fetchRecords);
+    
+    submitMessage.addEventListener('click', () => {
+      const message = messageInput.value.trim();
+      if (message) {
+        createRecord(message);
+      } else {
+        messageError.textContent = 'Please enter a message';
+        messageError.style.display = 'block';
+      }
+    });
+    
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitMessage.click();
+      }
+    });
+    
+    // Initial data load
+    fetchHealthStatus();
+    fetchRecords();
+    
+    // Refresh health status every 30 seconds
+    setInterval(fetchHealthStatus, 30000);
+  </script>
+</body>
+</html>
