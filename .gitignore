@@ -1,3 +1,5 @@
 /.github
 /frontend/node_modules
 /terraform
+/server/api/routes/__pycache__
+/server/api/routes/__pycache__

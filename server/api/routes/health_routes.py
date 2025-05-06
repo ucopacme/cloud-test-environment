@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, current_app
+from sqlalchemy import text
 from datetime import datetime
 from models.db import db
 
@@ -19,7 +20,7 @@ def get_database_health():
     """Database health check endpoint."""
     try:
         # Execute a simple query to verify database connection
-        db.session.execute("SELECT 1")
+        db.session.execute(text("SELECT 1"))
         status = "healthy"
         message = "Database connection is established"
     except Exception as e:
@@ -44,7 +45,7 @@ def get_system_health():
     
     # Check database health
     try:
-        db.session.execute("SELECT 1")
+        db.session.execute(text("SELECT 1"))
         db_status = "healthy"
         db_message = "Database connection is established"
     except Exception as e:
