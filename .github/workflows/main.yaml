@@ -1,0 +1,37 @@
+name: test-env-app
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: rheos-8
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+        
+      - name: Create virtual environment
+        run: |
+          workdir=./server/
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Pring debug information
+        run: |
+          workdir=./server/
+          echo "Python version: $(python --version)"
+          echo "Pip version: $(pip --version)"
+          echo "Installed packages:"
+          pip list
