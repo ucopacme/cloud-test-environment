@@ -26,7 +26,6 @@ jobs:
         
       - name: Create virtual environment
         run: |
-          cd $working-directory
           python -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
