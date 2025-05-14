@@ -36,7 +36,7 @@ def get_database_health():
 @health_bp.route('/system', methods=['GET'])
 def get_system_health():
     """Get health status of all system components."""
-    # Check backend health (always healthy if this endpoint is reached)
+    # Check backend health (always healthy if this endpoint is reached) 
     backend_health = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
