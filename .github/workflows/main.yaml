@@ -37,3 +37,15 @@ jobs:
           echo "Pip version: $(pip --version)"
           echo "Installed packages:"
           pip list
+
+      - name: Archive Release
+        uses: thedoctor0/zip-release@0.7.5
+        with:
+          type: 'zip'
+          filename: 'test_app_release.zip'
+          exclusions: '*.git* /*node_modules/* .editorconfig'
+
+      - name: Upload Release
+        uses: actions/upload-artifact@v2
+        with:
+          name: test_app_release  
