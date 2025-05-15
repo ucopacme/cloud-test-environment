@@ -31,7 +31,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Pring debug information
+      - name: Print debug information
         run: |
           echo "Python version: $(python --version)"
           echo "Pip version: $(pip --version)"
@@ -50,6 +50,8 @@ jobs:
         with:
           artifacts: "test_app_release.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
 
       # - name: Release
       #   uses: softprops/action-gh-release@v2
