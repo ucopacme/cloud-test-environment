@@ -45,7 +45,6 @@ jobs:
           filename: 'test_app_release.zip'
           exclusions: '*.git* /*node_modules/* .editorconfig'
 
-      - name: Upload Release
-        uses: actions/upload-artifact@v2
-        with:
-          name: test_app_release  
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'release'  
