@@ -45,6 +45,12 @@ jobs:
           filename: 'test_app_release.zip'
           exclusions: '*.git* /*node_modules/* .editorconfig'
 
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'release'  
+      - name: Upload Release
+        uses: ncipollo/release-action@v1.12.0
+        with:
+          artifacts: "test_app_release.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Release
+      #   uses: softprops/action-gh-release@v2
+      #   if: github.ref_type == 'release'  
