@@ -45,21 +45,11 @@ jobs:
           filename: 'test_app_release.zip'
           exclusions: '*.git* /*node_modules/* .editorconfig'
 
-      - name: Generate release tag
-        id: generate_release_tag
-        uses: alexvingg/next-release-tag@v1.0.3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag_prefix: ''
-
       - name: Upload Release
         uses: ncipollo/release-action@v1.12.0
         with:
           artifacts: "test_app_release.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.generate_release_tag.outputs.release_tag }}
-          release_name: Release ${{ steps.generate_release_tag.outputs.release_tag }}
-
-      # - name: Release
-      #   uses: softprops/action-gh-release@v2
-      #   if: github.ref_type == 'release'  
+          tag: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
+          
