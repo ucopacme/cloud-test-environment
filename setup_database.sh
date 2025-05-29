@@ -71,7 +71,8 @@ else
 fi
 
 # Ask if sample data should be loaded
-read -p "Do you want to load sample data? (y/N): " load_sample_data
+#read -p "Do you want to load sample data? (y/N): " load_sample_data
+load_sample_data="Y
 
 if [[ $load_sample_data =~ ^[Yy]$ ]]; then
     echo -e "\n${GREEN}Loading sample data...${NC}"
